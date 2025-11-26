@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The GREENWASH Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+  :root {
+    --primary: #19f7c1;
+    --primary-dark: #13cfa2;
+    --deep-bg: #006F77;
+    --deep-bg-2: #05484d;
+    --text-light: #ffffff;
+    --text-dark: #003d3f;
+    --radius: 20px;
+  }
+  
+  /* BACKGROUND GLOBAL */
+  html, body {
+    min-height: 100vh;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  body, #setupPage, #scorePage, #endPage {
+    background: var(--deep-bg);
+    color: var(--text-light);
+    font-family: 'Montserrat', sans-serif;
+  }
+  
+  #setupPage, #scorePage, #endPage {
+    min-height: 100vh;
+  }
+  
+  /* TITRES */
+  .title-main, h1, h2 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--primary);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
+  
+  .title-script {
+    font-family: 'Pacifico', cursive;
+    color: white;
+    font-size: 1.7rem;
+  }
+  
+  /* BOUTONS */
+  button, .btn-primary, .btn-boost {
+    border-radius: var(--radius);
+    font-weight: 700;
+    transition: 0.2s;
+    cursor: pointer;
+  }
+  
+  .btn-primary, #addPlayer, #startGame, #nextRound, #endGame, #resetGame, #backToSetup {
+    background: var(--primary);
+    color: var(--deep-bg);
+    padding: 12px 20px;
+  }
+  
+  .btn-primary:hover, #addPlayer:hover, #startGame:hover, #nextRound:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+  }
+  
+  .btn-boost, #boostX2, #boostX3 {
+    background: var(--primary);
+    color: var(--deep-bg);
+    padding: 8px 14px;
+  }
+  
+  .btn-boost:hover, #boostX2:hover, #boostX3:hover {
+    background: var(--primary-dark);
+  }
+  
+  #endGame {
+    background: #ff4d4d;
+    color: white;
+  }
+  #endGame:hover {
+    background: #ff1a1a;
+  }
+  
+  #resetGame {
+    background: #888;
+    color: white;
+  }
+  #resetGame:hover {
+    background: #666;
+  }
+  
+  /* CARDS (TABLEAUX, BLOCS JOUEURS, ETC) */
+  .card, #chartContainer {
+    background: var(--deep-bg-2);
+    padding: 15px;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  
+  /* INPUT FIELDS */
+  input[type=number], input[type=text] {
+    border-radius: var(--radius);
+    background: var(--deep-bg-2);
+    color: var(--text-light);
+    padding: 8px 12px;
+    border: 1px solid var(--primary);
+    font-weight: 600;
+  }
+  
+  /* TABLE RESPONSIVE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  
+  th {
+    background: var(--primary);
+    color: var(--deep-bg);
+    padding: 10px;
+    font-weight: 700;
+  }
+  
+  td {
+    background: var(--deep-bg-2);
+    color: var(--text-light);
+    padding: 10px;
+    font-weight: 600;
+  }
+  
+  /* MODALE */
+  #boostModal {
+    position: fixed;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+  }
+  #boostModal .modal-card {
+    background: var(--deep-bg-2);
+    border-radius: var(--radius);
+    padding: 20px;
+    color: var(--text-light);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+  
+  #boostModal #closeModal {
+    background: var(--primary);
+    color: var(--deep-bg);
+    border-radius: var(--radius);
+    padding: 12px;
+    width: 100%;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+  #boostModal #closeModal:hover {
+    filter: brightness(0.9);
+  }
+  
+  /* REPONSES QCM */
+  .choice-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    border: 2px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    color: var(--text-light);
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  
+  .choice-btn:hover {
+    background: rgba(255,255,255,0.18);
+  }
+  
+  .choice-btn:disabled {
+    cursor: not-allowed;
+  }
+  
+  /* correct/wrong */
+  .choice-correct {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    color: var(--deep-bg) !important;
+  }
+  
+  .choice-wrong {
+    background: #ff6b6b !important;
+    border-color: #ff3b3b !important;
+    color: white !important;
+  }
+ </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+<!-- PAGE SETUP -->
+<div id="setupPage" class="flex flex-col items-center justify-center px-4 min-h-screen">
+  
+    <!-- Image du titre -->
+    <img src="logo.PNG" 
+         alt="THE GREENWASH GAME" 
+         class="w-100 mb-8">
+  
+    <div id="playersInputs" class="space-y-2 w-full max-w-sm"></div>
+  
+    <div class="flex flex-col sm:flex-row gap-2 mt-6">
+      <button id="addPlayer" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Add player</button>
+      <button id="startGame" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Start Game</button>
+    </div>
+  </div>
+  
+
+<!-- PAGE SCOREBOARD -->
+<div id="scorePage" class="hidden px-4 py-6 sm:px-8 max-w-4xl mx-auto">
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
+    <img src="logo.PNG" 
+         alt="THE GREENWASH GAME" 
+         class="w-100 mb-8">
+    <h1 class="text-2xl font-bold text-center sm:text-left">
+      Scoreboard - Round <span id="roundNumber">1</span>
+    </h1>
+    <div class="flex justify-center sm:justify-start gap-2">
+      <button id="boostX2" class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 font-bold">BOOST X2</button>
+      <button id="boostX3" class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 font-bold">BOOST X3</button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto sm:overflow-visible">
+    <table class="w-full table-fixed sm:table-auto mb-4">
+      <thead>
+        <tr>
+          <th class="border px-1 py-1 w-1/3 text-xs sm:text-base">Player</th>
+          <th class="border px-1 py-1 w-1/3 text-xs sm:text-base">Gold</th>
+          <th class="border px-1 py-1 w-1/3 text-xs sm:text-base">Pollution</th>
+        </tr>
+      </thead>
+      <tbody id="scoreTable"></tbody>
+    </table>
+  </div>
+
+  <div class="flex flex-col sm:flex-row gap-2">
+    <button id="nextRound" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next turn</button>
+    <button id="endGame" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">End Game</button>
+    <button id="resetGame" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Reset Game</button>
+  </div>
+
+  <div id="roundHistory" class="mt-6 p-4 bg-[#05484d] rounded-[20px] shadow-lg">
+    <h3 class="text-lg font-bold text-[#19f7c1] mb-3">Round history</h3>
+    <div id="roundHistoryContent" class="space-y-2 text-sm"></div>
+  </div>
+</div>
+
+<!-- PAGE END -->
+<div id="endPage" class="hidden p-4 max-w-4xl mx-auto text-center">
+  <h1 class="text-2xl font-bold mb-4">🎉 Results 🎉</h1>
+  <p id="goldWinner" class="text-lg mb-2"></p>
+  <p id="ecoWinner" class="text-lg mb-4"></p>
+  <div id="chartContainer" class="my-6 max-w-full px-4">
+    <h2 class="text-lg font-bold mb-2">Gold</h2>
+    <canvas id="goldChart" class="mx-auto w-full"></canvas>
+  
+    <h2 class="text-lg font-bold mt-6 mb-2">Pollution</h2>
+    <canvas id="pollutionChart" class="mx-auto w-full"></canvas>
+  </div>  
+  <button id="backToSetup" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">New game</button>
+</div>
+
+<!-- MODAL BOOST -->
+<div id="boostModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+    <div class="modal-card relative w-[90%] max-w-md bg-[#05484d] rounded-[20px] p-6 text-white shadow-lg animate-fadeIn">
+        <h2 class="text-center text-2xl font-bold mb-2 text-[#19f7c1]">
+            Question <span id="boostType"></span>
+        </h2>
+
+        <p id="boostQuestion" class="text-center text-lg mb-6"></p>
+
+        <div id="boostChoices" class="space-y-3"></div>
+
+        <button id="closeModal" class="mt-6 w-full py-3 font-semibold bg-[#19f7c1] text-[#065a60] rounded-[20px] hover:brightness-90 transition">
+            Close
+        </button>
+    </div>
+</div>
+
+<script>
+// Variables globales
+let players = [];
+let currentRound = 0;
+let history = {};
+
+const questionsX2 = [
+{
+  text: "Why is a refurbished device greener?",
+  answers: [
+    { text: "It uses fewer new materials", correct: true },
+    { text: "It charges faster", correct: false },
+    { text: "It has more colors", correct: false }
+  ]
+},
+{
+  text: "What does refurbishing reduce?",
+  answers: [
+    { text: "Phone brightness", correct: false },
+    { text: "Electronic waste", correct: true },
+    { text: "Internet speed", correct: false }
+  ]
+},
+{
+  text: "What is reused in a refurbished device?",
+  answers: [
+    { text: "The whole device", correct: true },
+    { text: "Only the battery", correct: false },
+    { text: "Only the screen", correct: false }
+  ]
+},
+
+{
+  text: "Why do compressed images save energy?",
+  answers: [
+    { text: "They add animations", correct: false },
+    { text: "They use less data", correct: true },
+    { text: "They look more pixelated", correct: false }
+  ]
+},
+{
+  text: "Compressed images help websites by…",
+  answers: [
+    { text: "Loading faster", correct: true },
+    { text: "Making files larger", correct: false },
+    { text: "Breaking images", correct: false }
+  ]
+},
+
+];
+
+const questionsX3 = [
+{
+  text: "What reduces CO₂ the most?",
+  answers: [
+    { text: "Keeping your phone longer", correct: true },
+    { text: "Using two phones", correct: false },
+    { text: "Buying a new phone yearly", correct: false }
+  ]
+},
+{
+  text: "Refurbishing is better than replacing because…",
+  answers: [
+    { text: "It avoids new production", correct: true },
+    { text: "It increases CO₂", correct: false },
+    { text: "It increases mining", correct: false }
+  ]
+},
+{
+  text: "Which action generates the LEAST pollution?",
+  answers: [
+    { text: "Buying a new one", correct: false },
+    { text: "Repairing a device", correct: true },
+    { text: "Throwing it away", correct: false }
+  ]
+},
+
+{
+  text: "Which choice makes a website greener?",
+  answers: [
+    { text: "Using 20 MB images", correct: false },
+    { text: "Compressing all images", correct: true },
+    { text: "Adding autoplay videos", correct: false }
+  ]
+},
+{
+  text: "Large images increase…",
+  answers: [
+    { text: "Data transfer", correct: true },
+    { text: "Screen brightness", correct: false },
+    { text: "Battery capacity", correct: false }
+  ]
+},
+];
+
+// Attendre que le DOM soit chargé
+document.addEventListener("DOMContentLoaded", () => {
+  // Récupérer tous les éléments
+  const setupPage = document.getElementById('setupPage');
+  const scorePage = document.getElementById('scorePage');
+  const endPage = document.getElementById('endPage');
+  const playersInputsDiv = document.getElementById('playersInputs');
+  const addPlayerBtn = document.getElementById('addPlayer');
+  const startGameBtn = document.getElementById('startGame');
+  const scoreTable = document.getElementById('scoreTable');
+  const endGameBtn = document.getElementById('endGame');
+  const resetGameBtn = document.getElementById('resetGame');
+  const backToSetupBtn = document.getElementById('backToSetup');
+  const goldWinnerP = document.getElementById('goldWinner');
+  const ecoWinnerP = document.getElementById('ecoWinner');
+  const roundNumberSpan = document.getElementById('roundNumber');
+  const nextRoundBtn = document.getElementById('nextRound');
+  const boostX2Btn = document.getElementById('boostX2');
+  const boostX3Btn = document.getElementById('boostX3');
+  const boostModal = document.getElementById('boostModal');
+  const boostType = document.getElementById('boostType');
+  const boostQuestion = document.getElementById('boostQuestion');
+  const closeModalBtn = document.getElementById('closeModal');
+  const roundHistoryDiv = document.getElementById('roundHistory');
+
+  // Fonctions
+  function renderSetupInputs() {
+    playersInputsDiv.innerHTML = '';
+    players.forEach((p, i) => {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = p.name || '';
+      input.placeholder = `Player ${i+1} name`;
+      input.className = 'w-full p-2 border rounded';
+      input.oninput = e => players[i].name = e.target.value;
+      playersInputsDiv.appendChild(input);
+    });
+  }
+
+  function renderScoreboard(){
+    roundNumberSpan.textContent = currentRound;
+    scoreTable.innerHTML = '';
+    players.forEach((p,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="border px-2 py-1">${p.name}</td>
+        <td class="border px-2 py-1">
+          <input type="number" id="gold-${i}" value="${p.gold}" class="w-16 p-1 border rounded text-center text-xs sm:text-sm"/>
+        </td>
+        <td class="border px-2 py-1">
+          <input type="number" id="pollution-${i}" value="${p.pollution}" class="w-16 p-1 border rounded text-center text-xs sm:text-sm"/>
+        </td>
+      `;
+      scoreTable.appendChild(tr);
+    });
+  }
+
+  function renderRoundHistory(){
+    const historyContent = document.getElementById('roundHistoryContent');
+    historyContent.innerHTML='';
+    
+    for(let r=currentRound;r>=0;r--){
+      const roundDiv = document.createElement('div');
+      roundDiv.className = 'p-3 bg-[#065a60] rounded-[15px] border border-[#19f7c1]/20';
+      
+      const roundTitle = document.createElement('div');
+      roundTitle.className = 'font-bold text-[#19f7c1] mb-2';
+      roundTitle.textContent = `Round ${r}`;
+      roundDiv.appendChild(roundTitle);
+      
+      const playersDiv = document.createElement('div');
+      playersDiv.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2';
+      
+      players.forEach((p,i)=>{
+        const entry = history[i][r];
+        if(!entry) return;
+        
+        const playerSpan = document.createElement('div');
+        playerSpan.className = 'flex items-center justify-between bg-[#05484d] px-3 py-2 rounded-[10px]';
+        
+        let content = `<span class="font-semibold">${p.name}</span>`;
+        
+        if(r===0) {
+          content += `<span class="text-white/80">${entry.gold} 🪙 / ${entry.pollution} 🏭</span>`;
+        } else {
+          const prev = history[i][r-1];
+          const goldDiff = entry.gold - prev.gold;
+          const polDiff = entry.pollution - prev.pollution;
+          
+          const goldColor = goldDiff > 0 ? 'text-green-400' : goldDiff < 0 ? 'text-red-400' : 'text-white/80';
+          const polColor = polDiff > 0 ? 'text-red-400' : polDiff < 0 ? 'text-green-400' : 'text-white/80';
+          
+          const goldArrow = goldDiff > 0 ? '↗' : goldDiff < 0 ? '↘' : '→';
+          const polArrow = polDiff > 0 ? '↗' : polDiff < 0 ? '↘' : '→';
+          
+          content += `<span><span class="${goldColor}">${entry.gold} ${goldArrow}</span> / <span class="${polColor}">${entry.pollution} ${polArrow}</span></span>`;
+        }
+        
+        playerSpan.innerHTML = content;
+        playersDiv.appendChild(playerSpan);
+      });
+      
+      roundDiv.appendChild(playersDiv);
+      historyContent.appendChild(roundDiv);
+    }
+  }
+
+  function drawChart() {
+    drawSingleChart('goldChart', 'gold');
+    drawSingleChart('pollutionChart', 'pollution');
+  }
+
+  function drawSingleChart(canvasId, type) {
+    const canvas = document.getElementById(canvasId);
+    const container = canvas.parentElement;
+
+    canvas.width = container.clientWidth;
+    canvas.height = canvas.width * 0.5;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const padding = 40;
+    const graphWidth = canvas.width - 2*padding;
+    const graphHeight = canvas.height - 2*padding;
+
+    let maxVal=-Infinity, minVal=Infinity, maxRound=0;
+    Object.values(history).forEach(ph => {
+      ph.forEach(e => {
+        const val = type==='gold'? e.gold : e.pollution;
+        maxVal = Math.max(maxVal, val);
+        minVal = Math.min(minVal, val);
+        maxRound = Math.max(maxRound, e.round);
+      });
+    });
+    const yRange = Math.max(maxVal - minVal,1);
+    const yMin = minVal;
+
+    // Axes
+    ctx.strokeStyle='#333';
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(padding,padding);
+    ctx.lineTo(padding,canvas.height-padding);
+    ctx.lineTo(canvas.width-padding,canvas.height-padding);
+    ctx.stroke();
+
+    // Labels
+    ctx.fillStyle='#333';
+    ctx.font='12px sans-serif';
+    ctx.fillText('Rounds',canvas.width/2-20,canvas.height-10);
+    ctx.save();
+    ctx.translate(10,canvas.height/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText('Value',0,0);
+    ctx.restore();
+
+    // Grille
+    ctx.strokeStyle='#ddd';
+    ctx.lineWidth=1;
+    for(let i=0;i<=5;i++){
+      const y = padding + (i/5)*graphHeight;
+      ctx.beginPath();
+      ctx.moveTo(padding,y);
+      ctx.lineTo(canvas.width-padding,y);
+      ctx.stroke();
+      const val = Math.round(maxVal-(i/5)*yRange);
+      ctx.fillStyle='#666';
+      ctx.fillText(val.toString(), padding-30, y+4);
+    }
+
+    const colors=['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899'];
+
+    players.forEach((p,i)=>{
+      const ph = history[i]||[];
+      if(ph.length===0) return;
+
+      ctx.strokeStyle = colors[i%colors.length];
+      ctx.fillStyle = colors[i%colors.length];
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ph.forEach((e,idx)=>{
+        const val = type==='gold'? e.gold : e.pollution;
+        const x = padding + (e.round/maxRound)*graphWidth;
+        const y = canvas.height-padding - ((val-yMin)/yRange)*graphHeight;
+        if(idx===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+      // Points
+      ph.forEach(e=>{
+        const val = type==='gold'? e.gold : e.pollution;
+        const x = padding + (e.round/maxRound)*graphWidth;
+        const y = canvas.height-padding - ((val-yMin)/yRange)*graphHeight;
+        ctx.beginPath();
+        ctx.arc(x,y,3,0,2*Math.PI);
+        ctx.fill();
+      });
+    });
+  }
+
+  function openBoostModal(boostValue, questionSet) {
+    const q = questionSet[Math.floor(Math.random() * questionSet.length)];
+
+    boostType.textContent = boostValue;
+    boostQuestion.textContent = q.text;
+
+    const choicesDiv = document.getElementById("boostChoices");
+    choicesDiv.innerHTML = "";
+
+    q.answers.forEach((answer) => {
+      const btn = document.createElement("button");
+      btn.className = "choice-btn border w-full p-3 rounded-[20px] bg-white/10 text-white font-semibold hover:bg-white/20";
+      btn.textContent = answer.text;
+
+      btn.onclick = () => {
+        // Bloquer tous les boutons
+        document.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
+
+        if (answer.correct) {
+          btn.classList.add("choice-correct");
+        } else {
+          btn.classList.add("choice-wrong");
+        }
+      };
+
+      choicesDiv.appendChild(btn);
+    });
+
+    boostModal.classList.remove("hidden");
+  }
+
+  // Event Listeners
+  addPlayerBtn.onclick = () => {
+    players.push({name:'', gold:50, pollution:0});
+    renderSetupInputs();
+  };
+
+  startGameBtn.onclick = () => {
+    if(players.length < 3) {
+      alert('You need at least 3 players!');
+      return;
+    }
+    currentRound = 0;
+    history = {};
+    players.forEach((p,i)=>{
+      p.gold = 50;
+      p.pollution = 0;
+      history[i] = [{round:0, gold:50, pollution:0}];
+    });
+    setupPage.classList.add('hidden');
+    scorePage.classList.remove('hidden');
+    renderScoreboard();
+    renderRoundHistory();
+  };
+
+  nextRoundBtn.onclick = () => {
+    players.forEach((p,i)=>{
+      const goldInput = document.getElementById(`gold-${i}`);
+      const polInput = document.getElementById(`pollution-${i}`);
+      if(goldInput)p.gold=parseInt(goldInput.value)||0;
+      if(polInput)p.pollution=parseInt(polInput.value)||0;
+      history[i].push({round:currentRound+1, gold:p.gold, pollution:p.pollution});
+    });
+    currentRound++;
+    renderScoreboard();
+    renderRoundHistory();
+  };
+
+  endGameBtn.onclick = () => {
+    players.forEach((p,i)=>{
+      const goldInput = document.getElementById(`gold-${i}`);
+      const polInput = document.getElementById(`pollution-${i}`);
+      if(goldInput)p.gold=parseInt(goldInput.value)||0;
+      if(polInput)p.pollution=parseInt(polInput.value)||0;
+      history[i].push({round:currentRound, gold:p.gold, pollution:p.pollution});
+    });
+
+    scorePage.classList.add('hidden');
+    endPage.classList.remove('hidden');
+
+    const maxGold = Math.max(...players.map(p=>p.gold));
+    const goldWinners = players.filter(p=>p.gold===maxGold).map(p=>p.name).join(', ');
+
+    const ecoScores = players.map(p=>({name:p.name, score:p.gold-Math.abs(p.pollution)}));
+    const maxEcoScore = Math.max(...ecoScores.map(e=>e.score));
+    const ecoWinners = ecoScores.filter(e=>e.score===maxEcoScore).map(e=>e.name).join(', ');
+
+    goldWinnerP.textContent = `🥇 Gold Winner: ${goldWinners} (${maxGold} gold)`;
+    ecoWinnerP.textContent = `🌱 Eco Winner: ${ecoWinners} (score: ${maxEcoScore})`;
+
+    drawChart();
+  };
+
+  resetGameBtn.onclick = () => {
+    players = [];
+    currentRound = 0;
+    history = {};
+    renderSetupInputs();
+    scorePage.classList.add('hidden');
+    setupPage.classList.remove('hidden');
+  };
+
+  backToSetupBtn.onclick = () => {
+    location.reload();
+  };
+
+  boostX2Btn.onclick = () => {
+    openBoostModal("X2", questionsX2);
+  };
+
+  boostX3Btn.onclick = () => {
+    openBoostModal("X3", questionsX3);
+  };
+
+  closeModalBtn.onclick = () => {
+    boostModal.classList.add("hidden");
+    document.getElementById("boostChoices").innerHTML = "";
+  };
+
+  // Initialisation
+  renderSetupInputs();
+  boostModal.classList.add("hidden");
+});
+</script>
+</body>
+</html>
